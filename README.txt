@@ -38,3 +38,6 @@ Brief overview of library functions:
  - controller.py
 	WIP, NONFUNCTIONAL ATM. *Going* to be useful for making a game with configurable controls so that both
 	keyboards and controllers are supported.
+ - GFX.py
+	A library with a Particle() class. The Particle() class is used to create basic 2D graphical effects onscreen.
+	The GFX engine is designed to work extremely well with screen scaling, and tile-based games.
