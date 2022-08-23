@@ -1,4 +1,4 @@
-##"HUD.py" library ---VERSION 0.04---
+##"HUD.py" library ---VERSION 0.05---
 ##Copyright (C) 2022  Lincoln V.
 ##
 ##This program is free software: you can redistribute it and/or modify
@@ -23,6 +23,8 @@ class HUD(): #a sort-of simple class which should allow you to design HUDs which
         #HUD elements: "vertical bar" [pos,size,colors,value], "horizontal bar" [pos,size,colors,value],
         #    "text" [pos,size,colors,text], "scrolling text" [pos,[size of text,length of text bar],colors,text,scroll_pos]
         self.HUD_attribs = [] #HUD_attribs format: ["type of HUD element",[data regarding the HUD element],HUD value]
+        #simply a list of flags which correspond to each HUD element (True/False). Tells whether the element should be scaled or not.
+        self.scaled_HUD_attribs = []
         self.default_display_size = [640,480] #you add HUD elements in this screen resolution, than the program upscales the elements for you.
 
         #some variables to adjust tick speeds and other stuff
@@ -31,8 +33,9 @@ class HUD(): #a sort-of simple class which should allow you to design HUDs which
         self.tickcounter = 0
 
     #a (hopefully) easier way to create an HUD element than using append()
-    def add_HUD_element(self,element_type,element_data):
+    def add_HUD_element(self,element_type,element_data,scaling=True):
         self.HUD_attribs.append([element_type,element_data[:]])
+        self.scaled_HUD_attribs.append(scaling)
 
     #quick function which scales HUD coordinates to whichever scale is smaller, X or Y.
     def scale_coords(self,coords,screen_scale):
@@ -56,11 +59,13 @@ class HUD(): #a sort-of simple class which should allow you to design HUDs which
             self.tickcounter += 1
 
         #iterate through all HUD elements
+        x = 0 #index counter
         for element in self.HUD_attribs:
             if(element[0] == "text"): #print out the text at A) the size and position, SCALED according to screen size.
                 #draw a 1px. outline square, then draw the text overtop
                 unscaled_position = element[1][0][:] #grab our unscaled coordinates
-                unscaled_position = self.scale_coords(unscaled_position,screen_scale) #attempt to scale our coordinates
+                if(self.scaled_HUD_attribs[x]): #are we scaling?
+                    unscaled_position = self.scale_coords(unscaled_position,screen_scale) #attempt to scale our coordinates
                 colors = element[1][2]
                 text = element[1][3]
                 text_scale = element[1][1] / font.SIZE * 1.0 * rectangular_scale
@@ -75,8 +80,8 @@ class HUD(): #a sort-of simple class which should allow you to design HUDs which
                 text_box_size = element[1][1][1] #the size (in characters) of our scrolling text box
                 #draw a 1px. outline square, then draw the text overtop
                 unscaled_position = element[1][0][:] #grab our unscaled coordinates
-                unscaled_position = self.scale_coords(unscaled_position,screen_scale) #attempt to scale our coordinates
-                #unscaled_position = self.scale_coords(unscaled_position,screen_scale) #attempt to scale our coordinates
+                if(self.scaled_HUD_attribs[x]): #are we scaling?
+                    unscaled_position = self.scale_coords(unscaled_position,screen_scale) #attempt to scale our coordinates
                 colors = element[1][2]
                 text = element[1][3]
                 scroll_pos = self.tickcounter % (len(text) + 3) #find out what scroll position our text should be in
@@ -99,7 +104,8 @@ class HUD(): #a sort-of simple class which should allow you to design HUDs which
                 #colors[1] = bar outline
                 size = element[1][1] #grab out our HUD attributes
                 unscaled_position = element[1][0][:] #grab our unscaled coordinates
-                unscaled_position = self.scale_coords(unscaled_position,screen_scale) #attempt to scale our coordinates
+                if(self.scaled_HUD_attribs[x]): #are we scaling?
+                    unscaled_position = self.scale_coords(unscaled_position,screen_scale) #attempt to scale our coordinates
                 value = element[1][3]
                 colors = element[1][2]
                 if(colors[1] != None): #we actually want a background color?
@@ -114,7 +120,8 @@ class HUD(): #a sort-of simple class which should allow you to design HUDs which
                 #colors[1] = bar outline
                 size = element[1][1] #grab out our HUD attributes
                 unscaled_position = element[1][0][:] #grab our unscaled position coords
-                unscaled_position = self.scale_coords(unscaled_position,screen_scale) #attempt to scale our coordinates
+                if(self.scaled_HUD_attribs[x]): #are we scaling?
+                    unscaled_position = self.scale_coords(unscaled_position,screen_scale) #attempt to scale our coordinates
                 value = element[1][3]
                 colors = element[1][2]
                 if(colors[1] != None): #we actually want a background color?
@@ -122,7 +129,7 @@ class HUD(): #a sort-of simple class which should allow you to design HUDs which
                 if(colors[2] != None): #we actually want an outline color?
                     pygame.draw.rect(screen,colors[2],[unscaled_position[0],unscaled_position[1], size[0] * rectangular_scale, size[1] * rectangular_scale],int(1 * rectangular_scale + 1)) #draw the outline next
                 pygame.draw.rect(screen,colors[0],[unscaled_position[0] + (1 * rectangular_scale),unscaled_position[1] + (1 * rectangular_scale),(size[0] * value - 2) * rectangular_scale, (size[1] - 2) * rectangular_scale],0) #draw the bar last
-
+            x += 1 #increment our index counter
 
     def update_HUD_element(self,element_index,element_value): #allows you to change the status of an HUD element.
         self.HUD_attribs[element_index][1] = element_value
