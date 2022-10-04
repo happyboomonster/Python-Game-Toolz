@@ -1,4 +1,4 @@
-##"GFX.py" library ---VERSION 0.04---
+##"GFX.py" library ---VERSION 0.08---
 ## - REQUIRES: "font.py" library
 ## - For creating basic graphical effects (usually based on particles) in the same scale as your screen in a game -
 ##Copyright (C) 2022  Lincoln V.
@@ -20,6 +20,15 @@ import time
 import pygame
 import font
 import random
+
+# - This function prevents colors from being outside their max/min values due to timing errors -
+def colorsafe(color):
+    for x in range(0,len(color)):
+        if(color[x] > 255):
+            color[x] = 255
+        elif(color[x] < 0):
+            color[x] = 0
+    return color
 
 class Particle(): #a square onscreen which can A) change size, B) change color, and C) change position over time.
     def __init__(self, start_map_pos, finish_map_pos, start_size, finish_size, start_color, finish_color, time_start, time_finish, form=2):
@@ -90,12 +99,63 @@ class Particle(): #a square onscreen which can A) change size, B) change color, 
                 self.color[2] += self.calculated_color[2]
 
     def draw(self, TILE_SIZE, screen_scale, offset, screen): #draw the particle onscreen, accounting for a map offset
+        # - First, we check that our color is valid... -
+        self.color = colorsafe(self.color)
+        # - NOW we can draw the particle -
         if(self.form == 1):
             pygame.draw.rect(screen, self.color, [self.pos[0] * TILE_SIZE * screen_scale[0] - offset[0] * TILE_SIZE * screen_scale[0], self.pos[1] * TILE_SIZE * screen_scale[1] - offset[1] * TILE_SIZE * screen_scale[1], self.size * TILE_SIZE * screen_scale[0], self.size * TILE_SIZE * screen_scale[1]],0)
         elif(self.form == 2): #circles will always remain square, even when they should be scaled as rectangular. Scaled by the X axis.
             pygame.draw.circle(screen, self.color, [self.pos[0] * TILE_SIZE * screen_scale[0] - offset[0] * TILE_SIZE * screen_scale[0], self.pos[1] * TILE_SIZE * screen_scale[1] - offset[1] * TILE_SIZE * screen_scale[1]], self.size * TILE_SIZE * screen_scale[0])
         else: #we want to draw text?
             font.draw_words(self.form, [self.pos[0] * TILE_SIZE * screen_scale[0] - offset[0] * TILE_SIZE * screen_scale[0], self.pos[1] * TILE_SIZE * screen_scale[1] - offset[1] * TILE_SIZE * screen_scale[1]], self.color, self.size * screen_scale[0] / font.SIZE * TILE_SIZE, screen)
+
+    def return_data(self,precision=2): #returns data for netcode transmission
+        return [self.pos, #position attributes
+            [[round(self.destination[0][0],precision), round(self.destination[0][1],precision)],[round(self.destination[1][0],precision), round(self.destination[1][1],precision)]],
+            [round(self.delta_position[0],precision), round(self.delta_position[1],precision)], #find the amount we need to move over...well, the amount of time specified.
+            
+            round(self.size,precision), #size attributes
+            [round(self.goal_size[0],precision),round(self.goal_size[1],precision)],
+            round(self.delta_size,precision),
+
+            [round(self.color[0],precision), round(self.color[1],precision), round(self.color[2],precision)], #color attributes
+            [[round(self.goal_color[0][0],precision), round(self.goal_color[0][1],precision), round(self.goal_color[0][2],precision)],[round(self.goal_color[1][0],precision), round(self.goal_color[1][1],precision), round(self.goal_color[1][2],precision)]],
+            [round(self.delta_color[0],precision), round(self.delta_color[1],precision), round(self.delta_color[2],precision)],
+
+            round(time.time() - self.start_time,precision), #timing attributes
+            round(time.time() - self.finish_time,precision),
+            round(self.total_time,precision),
+
+            self.form, #form attribute
+
+            self.active, #this becomes true once the particle actually needs to be drawn onscreen.
+            self.timeout, #this becomes true once the particle is finished its job (providing a temporary effect onscreen)
+
+            round(time.time() - self.last_clock,precision) #this tells us roughly how long it has been since the particle's state has been updated.
+                ]
+
+    def enter_data(self, data): #enters data from netcode
+        self.pos = data[0] #position attributes
+        self.destination = data[1]
+        self.delta_position = data[2] #find the amount we need to move over...well, the amount of time specified.
+        
+        self.size = data[3] #size attributes
+        self.goal_size = data[4]
+        self.delta_size = data[5]
+
+        self.color = data[6] #color attributes
+        self.goal_color = data[7]
+        self.delta_color = data[8]
+
+        self.start_time = time.time() - data[9] #timing attributes
+        self.finish_time = time.time() - data[10]
+        self.total_time = data[11]
+
+        self.form = data[12] #form attribute
+
+        self.active = data[13] #this becomes true once the particle actually needs to be drawn onscreen.
+        self.timeout = data[14] #this becomes true once the particle is finished its job (providing a temporary effect onscreen)
+        self.last_clock = time.time() - data[15]
 
 #pretty self explanatory. Give the function the parameters it needs, and it makes a big explosion.
 def create_explosion(particles, position, explosion_radius, particle_sizes, start_colors, end_colors, duration, time_offset=0, optional_words=None, TILE_SIZE=1): #creates an explosion with varying color, choosable size and position.
@@ -114,7 +174,7 @@ def create_explosion(particles, position, explosion_radius, particle_sizes, star
         #add the finished particle to our collecive list
         particles.append(Particle([position[0], position[1]], [position[0] + random.randint(-explosion_radius * 100, explosion_radius * 100) / 100, position[1] + random.randint(-explosion_radius * 100, explosion_radius * 100) / 100], particle_sizes[0], particle_sizes[1], random_start_color[:], random_end_color[:], time.time() + time_offset, time.time() + duration + time_offset, 1))
     if(optional_words != None):
-        for x in range(0,int(explosion_radius * TILE_SIZE / 5)): #create a bunch of square particles for start
+        for x in range(0,int(explosion_radius * TILE_SIZE / 5)): #create a bunch of word particles
             random.shuffle(start_colors) #shuffle our color options
             random.shuffle(end_colors)
             random_start_color = start_colors[0] #pick a random color for both ending and starting our effect based on the choices we allow in our parameters above

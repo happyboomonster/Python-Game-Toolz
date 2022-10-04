@@ -1,4 +1,4 @@
-##"netcode.py" library ---VERSION 0.31---
+##"netcode.py" library ---VERSION 0.37---
 ##Copyright (C) 2022  Lincoln V.
 ##
 ##This program is free software: you can redistribute it and/or modify
@@ -44,6 +44,34 @@ CONNECTION_LOST = 5 #when we lose so many packets that our connection is conside
 BUFFERSIZE_WARNING = 6 #we don't get any data initially when we use .recv() to grab the buffersize
 SOCK_CLOSE = 7 #if our socket has been formally closed
 
+# - This function acts as a basic data verification system -
+# - Use: give a format list, the function returns whether the data matches your format.
+# - How to make a format list: If this was an acceptable data packet: [2, "a", ["abc", 5.07]]
+# - Then this would be your format: ["<class 'int'>", "<class 'str'>", ["<class 'str'>", "<class 'float'>"]]
+def data_verify(data, verify): #verify is your format list.
+    verified = True
+    if(str(type(data)) == "<class 'list'>" and str(type(verify)) == "<class 'list'>"): #if the input is not a list AND our verify data isn't a list, the function works like this. If not...see the else statement...
+        for x in range(0, len(data)): #data MUST be a list.
+            try: #this should work UNLESS we get an IndexError: If an IndexError occurs, that is an immediate red flag that the data we got is NOT what we were looking for.
+                verified = data_verify(data[x], verify[x])
+            except IndexError:
+                verified = False
+            if(verified == False): #our test failed at some point??
+                break
+    elif(verify == "..."): #this is a unpredictable piece of data??
+        return True #this counts then.
+    else: #we have a single object?
+        if(str(type(data)) == verify): #this is a recursive function, so this will work...
+            return True
+        else:
+            return False
+    return verified
+### - Quick function test -
+##data = [2, ["abc", 5.74738048109]]
+##verify = ["<class 'int'>", ["<class 'str'>", "<class 'float'>"]]
+##
+##print(data_verify(data, verify))
+
 #configures a socket so that it works with this netcode library's send/recieve commands - also resets the timeout value to DEFAULT_TIMEOUT
 def configure_socket(a_socket):
     a_socket.setblocking(True)
@@ -77,8 +105,8 @@ def send_data(Cs,buffersize,data): #sends some data without checking if the data
     if(Cs._closed): #has the socket been closed?
         return False
     try:
-        while (bytes_ct < len(str(data)) and Cs.fileno() != -1): #send our our data, making sure that all bytes of it are sent successfully
-            bytes_ct += Cs.send(bytes((datalen + data)[bytes_ct:],'utf-8'))
+        while (bytes_ct < len(str(total_data)) and Cs.fileno() != -1): #send our our data, making sure that all bytes of it are sent successfully
+            bytes_ct += Cs.send(bytes(total_data[bytes_ct:],'utf-8'))
     except Exception as e: #this exception occurs when the socket dies, or if we simply can't send the data for some reason (connection refused?)
         print(e)
         return False #our connection is dead
@@ -136,22 +164,13 @@ def recieve_data(Cs,buffersize): #tries to recieve some data without checking it
         else:
             data = data_pack[0].decode('utf-8')
     #   --- Now we try to evaluate our data, and hope it just works the first time ---
+    initial_success = True
     if(data != None and not Cs._closed):
-        initial_success = True
         try:
             data = eval(data)
         except: #it didn't work? Well then we set this flag so that we know we need to try something else before we count the data as lost...
             errors.append("(" + justify(str(packet_count),5) + ") " + ERROR_MSGS[INITIAL_EVAL])
             initial_success = False
-    #   --- IF we lost our data somewhere in this mess, we need to make sure to empty the data buffer ---
-    if(data == None and not Cs._closed):
-        while not Cs._closed:
-            data_pack = socket_recv(Cs,pow(10,buffersize))
-            if(data_pack[1] == 'timeout'): #we're out of data?
-                break
-            elif(data_pack[1] == 'disconnect'): #the socket died on us???
-                connected = False
-                break
     #   --- IF we can't evaluate the data string as-is, we try to see if there is ANYTHING left in the socket buffer ---
     else: #this occurs if data != None
         if(initial_success == False and not Cs._closed):
@@ -170,7 +189,9 @@ def recieve_data(Cs,buffersize): #tries to recieve some data without checking it
                     break
                 except: #else, we repeat this loop, trying to grab more data from the buffer cache, and hoping that it completes this data string...
                     errors.append("(" + justify(str(packet_count),5) + ") " + ERROR_MSGS[EVAL])
-                    pass
+    # - Clear out the socket if we can't get our data -
+    if(data == None):
+        connected = clear_socket(Cs)
     #   --- calculate our ping ---
     ping = int(1000.0 * (time.time() - ping_start))
     #   --- Check if the socket has been formally closed ---
@@ -178,3 +199,24 @@ def recieve_data(Cs,buffersize): #tries to recieve some data without checking it
         errors.append(ERROR_MSGS[SOCK_CLOSE])
         connected = False
     return [data, ping, errors, connected] #return the data this function gathered
+
+# - Clears out all data within a socket connection -
+def clear_socket(Cs):
+    Cs.settimeout(0.75)
+    clearing = True
+    clear_counter = 0 #this gets incremented each time we get no data from the socket. If we get 2 no-data recv() commands, then we consider the socket cleared.
+    while clearing:
+        data_pack = socket_recv(Cs, 50) #50 characters at a time?
+        data = data_pack[0]
+        errors = data_pack[1]
+        if(data == None): #we got no data? Increment our clear counter...
+            clear_counter += 1
+        else: #we got data, socket's still not empty...
+            clear_counter = 0
+        if(clear_counter > 1): #we're clear?
+            clearing = False
+        if(errors == "disconnect" or Cs._closed): #we lost connection?
+            return False #we're disconnected...=(
+    configure_socket(Cs)
+    return True #we're still connected...
+            
