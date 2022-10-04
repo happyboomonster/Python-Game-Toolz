@@ -143,43 +143,43 @@ class HUD(): #a sort-of simple class which should allow you to design HUDs which
     def delete_HUD(self,element_index): #deletes a HUD element of your choice
         del(self.HUD_attribs[element_index])
 
-###example code: Create some HUD elements!
-##anhud = HUD()
-###add an HUD element which is scrolling text. Outline of white, background of grey, green letters of size 15 px on 640x480 screen.
-##anhud.add_HUD_element("scrolling text",[[10,10],[100,6],[[255,255,255],[100,100,100],[0,255,0]],"Demo text which is scrolling"])
-###add an HUD element which should be some text; Outline of green, background of blue, letters of white.
-##anhud.add_HUD_element("text",[[20,40],50,[[255,255,255],[0,0,255],[0,255,0]],"test text"])
-###add an HUD element - vertical bar, outline of red, bar of white, no background.
-##anhud.add_HUD_element("vertical bar", [[100,100],[10,50],[[255,255,255],[255,0,0],None],0.0])
-###add an HUD element - horizontal bar, outline of red, bar of white, no background.
-##anhud.add_HUD_element("horizontal bar", [[150,150],[250,100],[[255,255,255],[255,0,0],None],0.0])
-##
-##screen = pygame.display.set_mode([640,480],pygame.RESIZABLE)
-##pygame.display.set_caption("HUD.py Library Test")
-##
-##running = True
-##countdown = 20
-##bar = 0.0
-##while running:
-##    countdown -= 1 #update a counter variable
-##    if(countdown == 0):
-##        countdown = 32768
-##
-##    bar += 0.01 #update our vertical bar
-##    if(bar > 100):
-##        bar = 0
-##        
-##    pygame.display.flip() #normal screen blanking and flipping routine
-##    screen.fill([0,0,0])
-##
-##    anhud.update_HUD_element_value(0,"Value: " + str(countdown))
-##    anhud.update_HUD_element_value(2,bar / 100)
-##    anhud.update_HUD_element_value(3,bar / 100)
-##
-##    anhud.draw_HUD(screen) #draw our lovely HUD
-##
-##    for event in pygame.event.get():
-##        if(event.type == pygame.QUIT):
-##            running = False
-##
-##pygame.quit()
+#example code: Create some HUD elements!
+anhud = HUD()
+#add an HUD element which is scrolling text. Outline of white, background of grey, green letters of size 15 px on 640x480 screen.
+anhud.add_HUD_element("scrolling text",[[10,10],[100,6],[[255,255,255],[100,100,100],[0,255,0]],"Demo text which is scrolling"])
+#add an HUD element which should be some text; Outline of green, background of blue, letters of white.
+anhud.add_HUD_element("text",[[20,40],50,[[255,255,255],[0,0,255],[0,255,0]],"test text"])
+#add an HUD element - vertical bar, outline of red, bar of white, no background.
+anhud.add_HUD_element("vertical bar", [[100,100],[10,50],[[255,255,255],[255,0,0],None],0.0])
+#add an HUD element - horizontal bar, outline of red, bar of white, no background.
+anhud.add_HUD_element("horizontal bar", [[150,150],[250,100],[[255,255,255],[255,0,0],None],0.0])
+
+screen = pygame.display.set_mode([640,480],pygame.RESIZABLE)
+pygame.display.set_caption("HUD.py Library Test")
+
+running = True
+countdown = 20
+bar = 0.0
+while running:
+    countdown -= 1 #update a counter variable
+    if(countdown == 0):
+        countdown = 32768
+
+    bar += 0.01 #update our vertical bar
+    if(bar > 100):
+        bar = 0
+        
+    pygame.display.flip() #normal screen blanking and flipping routine
+    screen.fill([0,0,0])
+
+    anhud.update_HUD_element_value(0,"Value: " + str(countdown))
+    anhud.update_HUD_element_value(2,bar / 100)
+    anhud.update_HUD_element_value(3,bar / 100)
+
+    anhud.draw_HUD(screen) #draw our lovely HUD
+
+    for event in pygame.event.get():
+        if(event.type == pygame.QUIT):
+            running = False
+
+pygame.quit()

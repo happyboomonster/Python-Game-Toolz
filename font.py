@@ -1,4 +1,4 @@
-##"font.py" library ---VERSION 0.01---
+##"font.py" library ---VERSION 0.03---
 ##Copyright (C) 2022  Lincoln V.
 ##
 ##This program is free software: you can redistribute it and/or modify
@@ -60,7 +60,11 @@ dictionary = [ #a list which interprets the match of a symbol to a number index
         ["?",38],
         [".",39],
         [">",40], #down arrow
-        ["^",41]
+        ["^",41],
+        ["/",42],
+        ["+",43],
+        ["%",44],
+        [",",45]
         ]
 
 font = [ #a line based font (abcdefghijklmnopqrstuvwxyz0123456789- ?.), size 10PX
@@ -105,7 +109,11 @@ font = [ #a line based font (abcdefghijklmnopqrstuvwxyz0123456789- ?.), size 10P
         [[0,1],[5,0],[10,1],[10,4],[5,5],[5,10]], #?
         [[5,9],[6,9],[6,10],[5,10],[5,9]], #.
         [[4,0],[6,0],[6,5],[10,5],[5,10],[0,5],[4,5],[4,0]], #down arrow
-        [[4,10],[6,10],[6,5],[10,5],[5,0],[0,5],[4,5],[4,10]] #up arrow
+        [[4,10],[6,10],[6,5],[10,5],[5,0],[0,5],[4,5],[4,10]], #up arrow
+        [[0,10],[10,0]], #/
+        [[5,0],[5,10],[5,5],[0,5],[10,5]], #+
+        [[10,0],[0,10],[5,5],[1,1],[3,1],[3,3],[1,3],[1,1],[9,9],[7,9],[7,7],[9,7],[9,9]], #%
+        [[4,8],[6,8],[3,10],[4,8]] #,
         ]
 
 #a single font which can be used on pygame's screen surface in any size of position

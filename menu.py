@@ -1,4 +1,4 @@
-##"menu.py" library ---VERSION 0.04---
+##"menu.py" library ---VERSION 0.07---
 ##Copyright (C) 2022  Lincoln V.
 ##
 ##This program is free software: you can redistribute it and/or modify
@@ -109,8 +109,8 @@ class Menu():
     def checkoptionsoffset(self): #make sure our "self.optionsoffset" isn't 0, nor greater than len(self.options) - 2
         if(self.optionsoffset < 0):
             self.optionsoffset = 0
-        elif(self.optionsoffset >= len(self.options) - 2):
-            self.optionsoffset = len(self.options) - 3
+        elif(self.optionsoffset > len(self.options) - 2):
+            self.optionsoffset = len(self.options) - 2
 
     def checkoffsetbuttons(self,coords,dimensions,cursorpos): #check if we clicked the down or up buttons to change the self.optionsoffset variable
         up = [coords[0] + (dimensions[0] / 2.0) - (font.SIZE * self.menuscale / 2.0),coords[1],coords[0] + (dimensions[0] / 2.0) + (font.SIZE * self.menuscale / 2.0),coords[1] + (font.SIZE * self.menuscale)]
@@ -124,7 +124,6 @@ class Menu():
 
     def drawhighlight(self,coords,dimensions,cursorpos,screen,stretch=True): #highlights any selected option
         returnedoption = None #a variable we use to return any OPTION we pressed 
-        self.checkoffsetbuttons(coords,dimensions,cursorpos)
         self.checkoptionsoffset() #make sure our "self.optionsoffset" isn't 0, nor greater than len(self.options) - 2
         collision = self.getmenucollision(coords,dimensions,stretch) #get our collision boxes
         optionscollision = collision[0]
@@ -151,13 +150,13 @@ class Menu():
         #make sure our "self.optionsoffset" isn't 0, nor greater than len(self.options) - 2
         self.checkoptionsoffset()
         for x in range(0,len(self.options)): #draw all the options names that will fit on our dimensions[1]
-            if(x * (font.SIZE * self.menuscale) > dimensions[1] - (font.SIZE * self.menuscale * 2)): #we've drawn all we can onscreen?
+            if(x * (font.SIZE * self.menuscale) > dimensions[1] - (font.SIZE * self.menuscale * 3)): #we've drawn all we can onscreen?
                 break
             elif((x + self.optionsoffset) > (len(self.options) - 1)): #we're at the end of the list?
                 break
             font.draw_words(self.options[x + self.optionsoffset],[coords[0],coords[1] + (font.SIZE * self.menuscale) + (font.SIZE * self.menuscale) * x],[0,0,255],self.menuscale,screen)
         for x in range(0,len(self.optionsetting)): #draw the state of all the options
-            if(x * (font.SIZE * self.menuscale) > dimensions[1]): #we've drawn all we can onscreen?
+            if(x * (font.SIZE * self.menuscale) > dimensions[1] - (font.SIZE * self.menuscale * 3)): #we've drawn all we can onscreen?
                 break
             elif(x + self.optionsoffset > len(self.optionsetting) - 1): #we're at the end of the list?
                 break
@@ -189,7 +188,7 @@ class Menu():
         optionscollision = []
         self.checkoptionsoffset() #make sure our "self.optionsoffset" isn't 0, nor greater than len(self.options) - 2
         for x in range(0,len(self.optionstype)): #draw all the options names that will fit on our dimensions[1]
-            if(x * (font.SIZE * self.menuscale) > dimensions[1]): #we've drawn all we can onscreen?
+            if(x * (font.SIZE * self.menuscale) >= dimensions[1] - (font.SIZE * self.menuscale * 3)): #we've drawn all we can onscreen?
                 break
             elif(x + self.optionsoffset > len(self.options) - 1): #we're at the end of the list?
                 break
@@ -336,9 +335,9 @@ class Menuhandler():
     def __init__(self):
         self.menus = []
         self.menunames = []
-        self.menuscale = 1.0
+        self.menu_scale = 1.0
         self.buttonscale = [1.0,1.0]
-        self.currentmenu = 0 #the index of the menu we are currently using in the menus[] list
+        self.current_menu = 0 #the index of the menu we are currently using in the menus[] list
         self.stretch = False
         self.default_display_size = [640,480] #used to calculate menu scale
 
@@ -350,51 +349,51 @@ class Menuhandler():
             self.menus[len(self.menus) - 1][0].addoption(options[x],optionstype[x])
 
     def grab_settings(self,settings):
-        return self.menus[self.currentmenu][0].grab_settings(settings)
+        return self.menus[self.current_menu][0].grab_settings(settings)
 
     def load_settings(self,settings,label):
-        self.menus[self.currentmenu][0].load_settings(settings,label)
+        self.menus[self.current_menu][0].load_settings(settings,label)
 
     def reconfigure_setting(self,optiontype,optionsetting,optionstate,label):
-        self.menus[self.currentmenu][0].reconfigure_setting(optiontype,optionsetting,optionstate,label)
+        self.menus[self.current_menu][0].reconfigure_setting(optiontype,optionsetting,optionstate,label)
 
     def update(self,screen):
-        self.menuscale = screen.get_width() / self.default_display_size[0]
+        self.menu_scale = screen.get_width() / self.default_display_size[0]
         self.buttonscale = [screen.get_width() / self.default_display_size[0],
                             screen.get_height() / self.default_display_size[1]
                             ]
 
     def menu_collision(self,coords,dimensions,cursorpos,inc=None):
-        self.menus[self.currentmenu][0].menuscale = self.menuscale #make sure we sync our menuscale with the one in the menu here
-        self.menus[self.currentmenu][0].buttonscale = self.buttonscale #make sure we sync our buttonscale with the one in the menu here
-        namespace = self.menuscale * font.SIZE #calculate the space needed to write the name of our game at the top of the screen
-        pressed = self.menus[self.currentmenu][0].menucollision([coords[0],coords[1] + namespace],[dimensions[0],dimensions[1] - namespace],cursorpos,self.stretch,inc)
-        wascurrentmenu = self.currentmenu
+        self.menus[self.current_menu][0].menuscale = self.menu_scale #make sure we sync our menu_scale with the one in the menu here
+        self.menus[self.current_menu][0].buttonscale = self.buttonscale #make sure we sync our buttonscale with the one in the menu here
+        namespace = self.menu_scale * font.SIZE #calculate the space needed to write the name of our game at the top of the screen
+        pressed = self.menus[self.current_menu][0].menucollision([coords[0],coords[1] + int(namespace)],[dimensions[0],dimensions[1] - int(namespace)],cursorpos,self.stretch,inc)
+        wascurrentmenu = self.current_menu
         if(pressed[0] != None): #we pressed a button - did we press THE button which changes our menu?
-            for x in range(0,len(self.menus[self.currentmenu][1])): #check if any of the buttons we pressed should move us to a different menu?
-                if(self.menus[self.currentmenu][1][x][0] == pressed[0]): #we pressed THE button?????
-                    self.currentmenu = self.menus[self.currentmenu][1][x][1] #change the menu we're drawing
+            for x in range(0,len(self.menus[self.current_menu][1])): #check if any of the buttons we pressed should move us to a different menu?
+                if(self.menus[self.current_menu][1][x][0] == pressed[0]): #we pressed THE button?????
+                    self.current_menu = self.menus[self.current_menu][1][x][1] #change the menu we're drawing
                     break #exit this checking loop!
         if(pressed[1] != None): #we pressed an ACTUAL button - did we press THE button which changes our menu?
-            for x in range(0,len(self.menus[self.currentmenu][2])):
-                if(self.menus[self.currentmenu][2][x][0] == pressed[1]): #we pressed THE button?????
-                    self.currentmenu = self.menus[self.currentmenu][2][x][1] #change the menu we're drawing
+            for x in range(0,len(self.menus[self.current_menu][2])):
+                if(self.menus[self.current_menu][2][x][0] == pressed[1]): #we pressed THE button?????
+                    self.current_menu = self.menus[self.current_menu][2][x][1] #change the menu we're drawing
                     break #exit this checking loop!
         return [pressed, wascurrentmenu] #return the button we pressed + the menu we're in, for if we want to do something with it somewhere else...
 
     def draw_menu(self,coords,dimensions,screen,mousepos): #draw the menu we're currently selecting, and its title/name
-        namespace = self.menuscale * font.SIZE #calculate the space needed to write the name of our game at the top of the screen
+        namespace = self.menu_scale * font.SIZE #calculate the space needed to write the name of our game at the top of the screen
         #draw the menu's name
-        font.draw_words(self.menunames[self.currentmenu],[coords[0] + (dimensions[0] / 2.0) - (len(list(self.menunames[self.currentmenu])) * font.SIZE * self.menuscale / 2.0),coords[1]],[255,255,0],self.menuscale,screen)
-        self.menus[self.currentmenu][0].menuscale = self.menuscale #make sure we sync our menuscale with the one in the menu here
-        self.menus[self.currentmenu][0].buttonscale = self.buttonscale #make sure we sync our buttonscale with the one in the menu here
-        self.menus[self.currentmenu][0].drawmenu([coords[0],coords[1] + int(namespace)],[dimensions[0],dimensions[1] - int(namespace)],screen,self.stretch)
-        self.menus[self.currentmenu][0].drawhighlight([coords[0],coords[1] + int(namespace)],[dimensions[0],dimensions[1] - int(namespace)],mousepos,screen,self.stretch)
+        font.draw_words(self.menunames[self.current_menu],[coords[0] + (dimensions[0] / 2.0) - (len(list(self.menunames[self.current_menu])) * font.SIZE * self.menu_scale / 2.0),coords[1]],[255,255,0],self.menu_scale,screen)
+        self.menus[self.current_menu][0].menuscale = self.menu_scale #make sure we sync our menu_scale with the one in the menu here
+        self.menus[self.current_menu][0].buttonscale = self.buttonscale #make sure we sync our buttonscale with the one in the menu here
+        self.menus[self.current_menu][0].drawmenu([coords[0],coords[1] + int(namespace)],[dimensions[0],dimensions[1] - int(namespace)],screen,self.stretch)
+        self.menus[self.current_menu][0].drawhighlight([coords[0],coords[1] + int(namespace)],[dimensions[0],dimensions[1] - int(namespace)],mousepos,screen,self.stretch)
 
 ###basic menu test
 ##mh = Menuhandler()
-##mh.create_menu(["Option a","this is a test option","another test option","menu element","","","",""],
-##               [[0,3],["a","b","c"],[0,99],["optiona","optionb"],["menu_test/p1D.png",[0,460]],["menu_test/p2D.png",[25,460]],["menu_test/p3D.png",[50,460]]],
+##mh.create_menu(["Option a","This is a test option"],
+##               [[0,3],["a","b","c"],
 ##               [],
 ##               [],
 ##               "Test Menu")
