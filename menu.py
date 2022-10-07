@@ -1,4 +1,4 @@
-##"menu.py" library ---VERSION 0.07---
+##"menu.py" library ---VERSION 0.09---
 ##Copyright (C) 2022  Lincoln V.
 ##
 ##This program is free software: you can redistribute it and/or modify
@@ -213,7 +213,7 @@ class Menu():
                 buttonscollision.append([(pos[0] * self.buttonscale[0]), (pos[1] * self.buttonscale[1]), (pos[0] * self.buttonscale[0]) + (buttonsize[0] * usedscale), (pos[1] * self.buttonscale[1]) + (buttonsize[1] * usedscale)])
         return [optionscollision, buttonscollision]
 
-    def menucollision(self,coords,dimensions,cursorpos,stretch=True,inc=None): #checks collision of menu items against cursorpos (inc = False-decrement if possible, inc=True-increment)
+    def menucollision(self,coords,dimensions,cursorpos,stretch=True,inc=None,change_menu=True): #checks collision of menu items against cursorpos (inc = False-decrement if possible, inc=True-increment)
         returnedoption = None #a variable we use to return any OPTION we pressed 
         self.checkoffsetbuttons(coords,dimensions,cursorpos)
         self.checkoptionsoffset() #make sure our "self.optionsoffset" isn't 0, nor greater than len(self.options) - 2
@@ -225,37 +225,38 @@ class Menu():
             acollisionbox = optionscollision[x][1]
             if(acollisionbox[0] < cursorpos[0] and acollisionbox[2] > cursorpos[0]): #our cursorpos is within the collision box on the X axis?
                 if(acollisionbox[1] < cursorpos[1] and acollisionbox[3] > cursorpos[1]): #our cursorpos is within the collision box on the Y axis?
-                    if(self.optionstype[xoffset] == "On-Off"): #change the options value in "self.optionsetting"
-                        #we're dealing with a binary option?
-                        if(self.optionstate[xoffset] == "On"):
-                            self.optionstate[xoffset] = "Off" #keep track of both the state of the setting, and make sure we know what we're gonna render onscreen to tell the user we registered their input
-                        else:
-                            self.optionstate[xoffset] = "On"
-                        self.optionsetting[xoffset] = self.optionstate[xoffset]
-                    elif(str(type(self.optionstype[xoffset][0])) == "<class 'int'>"): #we're looking at a "max-min" setting?
-                        if(inc == True or inc == None): #if we're either A)incrementing this value or B) doing standard stuff, do the following. ELSE...
-                            if(self.optionstate[xoffset] >= self.optionstype[xoffset][1]):
-                                self.optionstate[xoffset] = self.optionstype[xoffset][0] #restore the "min" value of our variable here
+                    if(change_menu):
+                        if(self.optionstype[xoffset] == "On-Off"): #change the options value in "self.optionsetting"
+                            #we're dealing with a binary option?
+                            if(self.optionstate[xoffset] == "On"):
+                                self.optionstate[xoffset] = "Off" #keep track of both the state of the setting, and make sure we know what we're gonna render onscreen to tell the user we registered their input
                             else:
-                                self.optionstate[xoffset] += 1 #otherwise increment it by one...
-                        else:
-                            if(self.optionstate[xoffset] <= self.optionstype[xoffset][0]):
-                                self.optionstate[xoffset] = self.optionstype[xoffset][1] #restore the "max" value of our variable here
+                                self.optionstate[xoffset] = "On"
+                            self.optionsetting[xoffset] = self.optionstate[xoffset]
+                        elif(str(type(self.optionstype[xoffset][0])) == "<class 'int'>"): #we're looking at a "max-min" setting?
+                            if(inc == True or inc == None): #if we're either A)incrementing this value or B) doing standard stuff, do the following. ELSE...
+                                if(self.optionstate[xoffset] >= self.optionstype[xoffset][1]):
+                                    self.optionstate[xoffset] = self.optionstype[xoffset][0] #restore the "min" value of our variable here
+                                else:
+                                    self.optionstate[xoffset] += 1 #otherwise increment it by one...
                             else:
-                                self.optionstate[xoffset] -= 1 #otherwise decrement it by one...
-                        self.optionsetting[xoffset] = str(self.optionstate[xoffset])
-                    else: #we're looking at a multiple-option setting?
-                        if(inc == True or inc == None):
-                            if(self.optionstate[xoffset] >= len(self.optionstype[xoffset]) - 1):
-                                self.optionstate[xoffset] = 0 #we were at the last state of our option? if so, reset it back to 0
+                                if(self.optionstate[xoffset] <= self.optionstype[xoffset][0]):
+                                    self.optionstate[xoffset] = self.optionstype[xoffset][1] #restore the "max" value of our variable here
+                                else:
+                                    self.optionstate[xoffset] -= 1 #otherwise decrement it by one...
+                            self.optionsetting[xoffset] = str(self.optionstate[xoffset])
+                        else: #we're looking at a multiple-option setting?
+                            if(inc == True or inc == None):
+                                if(self.optionstate[xoffset] >= len(self.optionstype[xoffset]) - 1):
+                                    self.optionstate[xoffset] = 0 #we were at the last state of our option? if so, reset it back to 0
+                                else:
+                                    self.optionstate[xoffset] += 1 #move to the next available option
                             else:
-                                self.optionstate[xoffset] += 1 #move to the next available option
-                        else:
-                            if(self.optionstate[xoffset] <= 0): #we're already at the first index of our list of options?
-                                self.optionstate[xoffset] = len(self.optionstype[xoffset]) - 1 #we were at the last state of our option? if so, reset it back to [MAX]
-                            else:
-                                self.optionstate[xoffset] -= 1 #move to the previous available option
-                        self.optionsetting[xoffset] = str(self.optionstype[xoffset][self.optionstate[xoffset]])
+                                if(self.optionstate[xoffset] <= 0): #we're already at the first index of our list of options?
+                                    self.optionstate[xoffset] = len(self.optionstype[xoffset]) - 1 #we were at the last state of our option? if so, reset it back to [MAX]
+                                else:
+                                    self.optionstate[xoffset] -= 1 #move to the previous available option
+                            self.optionsetting[xoffset] = str(self.optionstype[xoffset][self.optionstate[xoffset]])
                             
                     returnedoption = optionscollision[x][0] #return the index of the option we collided with
                     break
@@ -300,6 +301,7 @@ def get_input(screen,header=""): #makes a basic text input UI with a header of y
     global keys
     text = "" #this is what we've entered into the UI
     scale = 1.0 #the scale of our text as we draw it
+    header_scale = 1.0 #this is the header scale; it is needed because...well...I hate headers which go off the edge of a screen.
     running = True
     while running:
         screensize = [screen.get_width(),screen.get_height()]
@@ -307,18 +309,25 @@ def get_input(screen,header=""): #makes a basic text input UI with a header of y
             scale -= 0.1
         elif(scale * font.SIZE * len(list(text)) < screensize[0] - screensize[0] / 3 and scale * font.SIZE < screensize[1] - screensize[1] / 3): #we haven't wrote much text obviously...it's not even filling our screen or even close!!!
             scale += 0.1
+        # - Manage the header scale -
+        if(header_scale * font.SIZE * len(list(header)) > screensize[0] - screensize[0] / 5): #the header is too big for the screen? Shrink it!
+            header_scale -= 0.025
+        elif(header_scale * font.SIZE * len(list(header)) < screensize[0] - screensize[0] / 3 and len(list(header)) > 0): #the header is too small? Grow it!!!
+            header_scale += 0.025
         #clear our screen...
         screen.fill([0,0,0])
         #draw a green square around our text we're writing
         pygame.draw.rect(screen,[0,255,0],[int(screensize[0] / 2.0 - len(list(text)) * scale * font.SIZE / 2.0) - int(font.SIZE * scale / 10),int(screensize[1] / 2.0 - scale * font.SIZE / 2.0) - int(font.SIZE * scale / 10),int(screensize[0] / 2.0 + len(list(text)) * scale * font.SIZE / 2.0) - int(screensize[0] / 2.0 - len(list(text)) * scale * font.SIZE / 2.0) + int(font.SIZE * scale / 10),int(screensize[1] / 2.0 + scale * font.SIZE / 2.0) - int(screensize[1] / 2.0 - scale * font.SIZE / 2.0) + int(font.SIZE * scale / 10)],1)
         #draw our text
         font.draw_words(text,[int(screensize[0] / 2.0  - len(list(text)) * scale * font.SIZE / 2.0),int(screensize[1] / 2.0 - scale * font.SIZE / 2.0)],[0,0,255],scale,screen)
-        font.draw_words(header,[int(screensize[0] / 2.0 - len(list(header)) * font.SIZE / 2.0),0],[255,255,0],1,screen)
+        font.draw_words(header,[int(screensize[0] / 2.0 - len(list(header)) * header_scale * font.SIZE / 2.0),0],[255,255,0],header_scale,screen)
         #flip the display
         pygame.display.flip()
 
         for event in pygame.event.get(): #check if somebody wanted to type something...
-            if(event.type == pygame.KEYDOWN):
+            if(event.type == pygame.QUIT): #we wanted to exit the text box?
+                return None
+            elif(event.type == pygame.KEYDOWN):
                 if(event.key == pygame.K_RETURN): #they pressed enter!!!
                     running = False #exit the loop
                 elif(event.key == pygame.K_BACKSPACE): #uhoh, we have to delete something!
@@ -363,22 +372,23 @@ class Menuhandler():
                             screen.get_height() / self.default_display_size[1]
                             ]
 
-    def menu_collision(self,coords,dimensions,cursorpos,inc=None):
+    def menu_collision(self,coords,dimensions,cursorpos,inc=None,change_menu=True):
         self.menus[self.current_menu][0].menuscale = self.menu_scale #make sure we sync our menu_scale with the one in the menu here
         self.menus[self.current_menu][0].buttonscale = self.buttonscale #make sure we sync our buttonscale with the one in the menu here
         namespace = self.menu_scale * font.SIZE #calculate the space needed to write the name of our game at the top of the screen
-        pressed = self.menus[self.current_menu][0].menucollision([coords[0],coords[1] + int(namespace)],[dimensions[0],dimensions[1] - int(namespace)],cursorpos,self.stretch,inc)
+        pressed = self.menus[self.current_menu][0].menucollision([coords[0],coords[1] + int(namespace)],[dimensions[0],dimensions[1] - int(namespace)],cursorpos,self.stretch,inc,change_menu)
         wascurrentmenu = self.current_menu
-        if(pressed[0] != None): #we pressed a button - did we press THE button which changes our menu?
-            for x in range(0,len(self.menus[self.current_menu][1])): #check if any of the buttons we pressed should move us to a different menu?
-                if(self.menus[self.current_menu][1][x][0] == pressed[0]): #we pressed THE button?????
-                    self.current_menu = self.menus[self.current_menu][1][x][1] #change the menu we're drawing
-                    break #exit this checking loop!
-        if(pressed[1] != None): #we pressed an ACTUAL button - did we press THE button which changes our menu?
-            for x in range(0,len(self.menus[self.current_menu][2])):
-                if(self.menus[self.current_menu][2][x][0] == pressed[1]): #we pressed THE button?????
-                    self.current_menu = self.menus[self.current_menu][2][x][1] #change the menu we're drawing
-                    break #exit this checking loop!
+        if(change_menu):
+            if(pressed[0] != None): #we pressed a button - did we press THE button which changes our menu?
+                for x in range(0,len(self.menus[self.current_menu][1])): #check if any of the buttons we pressed should move us to a different menu?
+                    if(self.menus[self.current_menu][1][x][0] == pressed[0]): #we pressed THE button?????
+                        self.current_menu = self.menus[self.current_menu][1][x][1] #change the menu we're drawing
+                        break #exit this checking loop!
+            if(pressed[1] != None): #we pressed an ACTUAL button - did we press THE button which changes our menu?
+                for x in range(0,len(self.menus[self.current_menu][2])):
+                    if(self.menus[self.current_menu][2][x][0] == pressed[1]): #we pressed THE button?????
+                        self.current_menu = self.menus[self.current_menu][2][x][1] #change the menu we're drawing
+                        break #exit this checking loop!
         return [pressed, wascurrentmenu] #return the button we pressed + the menu we're in, for if we want to do something with it somewhere else...
 
     def draw_menu(self,coords,dimensions,screen,mousepos): #draw the menu we're currently selecting, and its title/name
@@ -396,7 +406,7 @@ class Menuhandler():
 ##               [[0,3],["a","b","c"],
 ##               [],
 ##               [],
-##               "Test Menu")
+##               "Test Menu"])
 ##
 ##screen = pygame.display.set_mode([640,480],pygame.RESIZABLE)
 ##
