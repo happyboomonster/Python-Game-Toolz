@@ -36,8 +36,8 @@ Brief overview of library functions:
  - HUD.py
 	A library which works similarly to the menu.py library, but for designing HUDs instead of menus.
  - controller.py
-	WIP, NONFUNCTIONAL ATM. *Going* to be useful for making a game with configurable controls so that both
-	keyboards and controllers are supported.
+	Useful for making a game with configurable controls so that both keyboards and controllers are supported.
+	At the moment, I have only tested keyboards, and the library is not very useful as of yet.
  - GFX.py
 	A library with a Particle() class. The Particle() class is used to create basic 2D graphical effects onscreen.
 	The GFX engine is designed to work extremely well with screen scaling, and tile-based games.

@@ -1,4 +1,4 @@
-##"controller.py" library ---VERSION 0.01---
+##"controller.py" library ---VERSION 0.03---
 ## - use this library to easily make a game compatible with both controllers and keyboards!
 ##Copyright (C) 2022  Lincoln V.
 ##
@@ -47,6 +47,11 @@ def check_joystick_axes(joystick):
         axes[x] = joystick.get_axis(x)
     return axes
 
+def empty_keys(): #empties keycodes of keypresses
+    global keycodes
+    for x in keycodes:
+        keycodes.pop(0)
+
 #checks pygame's event loop for keypress events, and appends them to the keycode list. Also removes old keycodes.
 def get_keys(): #this should be run once per frame/compute tick in a game's code for optimal performance.
     global keycodes
@@ -73,17 +78,45 @@ class Controls():
             self.joystick = pygame.joystick.Joystick(self.js_num) #set up a joystick object on our joystick ID IF we are using joysticks
             self.joystick.init()
 
-    def get_input(joystick=None): #keyboard input is a list of keycodes of all the keys which are being pressed down. joystick is a joystick object.
+    def get_input(self): #keyboard_input is a list of keycodes of all the keys which are being pressed down.
         global keycodes #we need to read from this list of pressed keys to see what has been pressed
         buttons_pressed = [] #a list which contains the button numbers which are pressed
         keyboard_input = keycodes #we need to find out what keys have been pressed...
         if(self.kb_ctrl == "kb"): #we're getting input from a keyboard
             for x in range(0,len(self.buttons)): #check if any of our buttons keycodes matches any from keyboard_input
                 if(self.buttons[x] in keyboard_input): #did one of our keycodes match a keyboard press?
-                    buttons_pressed.append(x) #make sure we add this button to buttons_pressed
+                    buttons_pressed.append(self.buttons[x]) #make sure we add this button to buttons_pressed
         elif(self.kb_ctrl == "ctrl"): #we're getting input from a controller
             js_buttons = check_joystick_buttons(self.joystick)
             for x in range(0,len(js_buttons)):
                 if(js_buttons[x] in self.buttons): #have we found that a pressed button was part of our JS button configuration?
                     buttons_pressed.append(x) #add the button ID to the list!
         return buttons_pressed #return the list of all the buttons which were pressed
+
+    #configures a key of your choice by checking if any keys were pressed. If they were, the key gets automatically mapped to the key self.buttons[key_num] and True is returned. If no key is pressed, False is returned.
+    def configure_key(self, key_num):
+        global keycodes
+        if(keycodes != [] and self.kb_ctrl == "kb"): #we pressed a key?
+            self.buttons[key_num] = keycodes[0] #the first key pressed gets configuration priority.
+            return True
+        elif(self.kb_ctrl == "ctrl"): #joystick?
+            js_buttons = check_joystick_buttons(self.joystick)
+            if(js_buttons != []):
+                self.buttons[key_num] = js_buttons[0]
+                return True
+        return False
+
+### - Brief demo program of how to use this library effectively -
+##screen = pygame.display.set_mode([200,200])
+##player_1_controls = Controls(8, "kb") #keyboard player
+##for x in range(0,8): #configure all controls
+##    print("Configure button " + str(x))
+##    while not player_1_controls.configure_key(x):
+##        get_keys()
+##    pygame.time.delay(350)
+##    get_keys()
+##while True:
+##    get_keys() #grab all keys pressed
+##    print(player_1_controls.get_input())
+##
+##    pygame.time.delay(500) #I don't want to kill IDLE from printing too much...LOL

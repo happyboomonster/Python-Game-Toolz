@@ -1,4 +1,4 @@
-##"menu.py" library ---VERSION 0.09---
+##"menu.py" library ---VERSION 0.11---
 ##Copyright (C) 2022  Lincoln V.
 ##
 ##This program is free software: you can redistribute it and/or modify
@@ -214,8 +214,9 @@ class Menu():
         return [optionscollision, buttonscollision]
 
     def menucollision(self,coords,dimensions,cursorpos,stretch=True,inc=None,change_menu=True): #checks collision of menu items against cursorpos (inc = False-decrement if possible, inc=True-increment)
-        returnedoption = None #a variable we use to return any OPTION we pressed 
-        self.checkoffsetbuttons(coords,dimensions,cursorpos)
+        returnedoption = None #a variable we use to return any OPTION we pressed
+        if(change_menu):
+            self.checkoffsetbuttons(coords,dimensions,cursorpos)
         self.checkoptionsoffset() #make sure our "self.optionsoffset" isn't 0, nor greater than len(self.options) - 2
         collision = self.getmenucollision(coords,dimensions,stretch) #get our collision boxes
         optionscollision = collision[0]
@@ -356,6 +357,10 @@ class Menuhandler():
         self.menunames.append(name) #add the name of the menu to the list
         for x in range(0,len(optionstype)): #add the new menu's options to the list
             self.menus[len(self.menus) - 1][0].addoption(options[x],optionstype[x])
+
+    def delete_menu(self, menu_num): #deletes a menu at the specified index
+        del(self.menus[menu_num])
+        del(self.menunames[menu_num])
 
     def grab_settings(self,settings):
         return self.menus[self.current_menu][0].grab_settings(settings)
