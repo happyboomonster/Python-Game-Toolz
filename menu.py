@@ -1,4 +1,4 @@
-##"menu.py" library ---VERSION 0.11---
+##"menu.py" library ---VERSION 0.14---
 ##Copyright (C) 2022  Lincoln V.
 ##
 ##This program is free software: you can redistribute it and/or modify
@@ -16,6 +16,7 @@
 
 import pygame
 import font
+import math
 
 keys = [
     [pygame.K_a,"a"],
@@ -134,15 +135,15 @@ class Menu():
             if(acollisionbox[0] < cursorpos[0] and acollisionbox[2] > cursorpos[0]): #our cursorpos is within the collision box on the X axis?
                 if(acollisionbox[1] < cursorpos[1] and acollisionbox[3] > cursorpos[1]): #our cursorpos is within the collision box on the Y axis?
                     #draw the highlight in here...
-                    pygame.draw.line(screen,[0,255,0],[0,acollisionbox[1] - 1],[screen.get_width(),acollisionbox[1] - 1],1)
-                    pygame.draw.line(screen,[0,255,0],[0,acollisionbox[3] - 1],[screen.get_width(),acollisionbox[3] - 1],1)
+                    pygame.draw.line(screen,[0,255,0],[0,int(acollisionbox[1] - 1)],[screen.get_width(),int(acollisionbox[1] - 1)],1)
+                    pygame.draw.line(screen,[0,255,0],[0,int(acollisionbox[3] - 1)],[screen.get_width(),int(acollisionbox[3] - 1)],1)
                     break
         returnedbutton = None #variable used to keep track of button presses
         for x in range(0,len(buttoncollision)): #check our button collision boxes
             acollisionbox = buttoncollision[x]
             if(acollisionbox[0] < cursorpos[0] and acollisionbox[2] > cursorpos[0]): #our cursorpos is within the collision box on the X axis?
                 if(acollisionbox[1] < cursorpos[1] and acollisionbox[3] > cursorpos[1]): #our cursorpos is within the collision box on the Y axis?
-                    pygame.draw.rect(screen,[0,255,0],[acollisionbox[0],acollisionbox[1],acollisionbox[2] - acollisionbox[0],acollisionbox[3] - acollisionbox[1]],1)
+                    pygame.draw.rect(screen,[0,255,0],[int(acollisionbox[0]),int(acollisionbox[1]),int(acollisionbox[2] - acollisionbox[0]),int(acollisionbox[3] - acollisionbox[1])],1)
                     break
 
     def drawmenu(self,coords,dimensions,screen,stretch=True): #dimensions are a list with an X and Y value in it, in pixels Offset: is a variable which displays a different set of options
@@ -168,8 +169,8 @@ class Menu():
         #draw all the buttons now
         if(stretch == True): #does we wants to stretch our assets all out of scale?
             for x in range(0,len(self.buttons)):
-                pos = [self.buttons[x][1][0] * self.buttonscale[0], self.buttons[x][1][1] * self.buttonscale[1]]
-                tmpsurface = pygame.transform.scale(self.buttons[x][0],[self.buttons[x][0].get_width()  * self.buttonscale[0],self.buttons[x][0].get_height() * self.buttonscale[1]])
+                pos = [int(self.buttons[x][1][0] * self.buttonscale[0]), int(self.buttons[x][1][1] * self.buttonscale[1])]
+                tmpsurface = pygame.transform.scale(self.buttons[x][0],[int(self.buttons[x][0].get_width()  * self.buttonscale[0]),int(self.buttons[x][0].get_height() * self.buttonscale[1])])
                 screen.blit(tmpsurface,pos)
         else:
             if(self.buttonscale[0] > self.buttonscale[1]): #are we scaling things farther in the X or Y axis?
@@ -180,8 +181,8 @@ class Menu():
                 #offset = [0,(dimensions[1] / 2.0) - (dimensions[1] / self.buttonscale[1] * usedscale / 2.0)]
             for x in range(0,len(self.buttons)):
                 #pos = [(self.buttons[x][1][0] * usedscale) + offset[0], (self.buttons[x][1][1] * usedscale) + offset[1]]
-                pos = [(self.buttons[x][1][0] * self.buttonscale[0]), (self.buttons[x][1][1] * self.buttonscale[1])]
-                tmpsurface = pygame.transform.scale(self.buttons[x][0],[self.buttons[x][0].get_width()  * usedscale,self.buttons[x][0].get_height() * usedscale])
+                pos = [int(self.buttons[x][1][0] * self.buttonscale[0]), int(self.buttons[x][1][1] * self.buttonscale[1])]
+                tmpsurface = pygame.transform.scale(self.buttons[x][0],[int(self.buttons[x][0].get_width()  * usedscale),int(self.buttons[x][0].get_height() * usedscale)])
                 screen.blit(tmpsurface,pos)
 
     def getmenucollision(self,coords,dimensions,stretch=True): #returns the collision for our menu as this format: [OptionIndex, collisionbox]
@@ -298,7 +299,52 @@ class Menu():
                     break
         return settings[:]
 
-def get_input(screen,header=""): #makes a basic text input UI with a header of your choice
+def draw_message(message,width_pixels,width_char): #draws a message on a surface in the form of a paragraph.
+    #width_pixels is in pixels, and width_char is in characters.
+    font_scale = (width_pixels / font.SIZE) / width_char
+    screen = pygame.Surface([width_pixels,font.SIZE * font_scale * math.ceil(len(message) / width_char)])
+    word_pos = [0,0]
+    word = ""
+    x_offset = 0
+    for x in range(0,len(message)):
+        y_increment = int((x + x_offset) / width_char)
+        x_increment = (((x + x_offset) / width_char) - int((x + x_offset) / width_char)) * width_char
+        if(message[x] == " " or x == len(message) - 1): #we're going to draw the word!
+            if(x == len(message) - 1): #we need to add the last character to our message word then...
+               word += message[x]
+            # - Check: Is the word going to end up off the edge of our border if we draw it on the current line? -
+            if(word_pos[0] + (len(word) * font.SIZE * font_scale) > width_pixels):
+                # - Move the word onto the next line -
+                x_offset += width_char - x_increment
+                # - Recalculate word_pos -
+                word_pos[1] += font.SIZE * font_scale
+                word_pos[0] = 0
+                # - Recreate our screen, since it needs to be resized to account for this change -
+                new_screen = pygame.Surface([width_pixels,screen.get_height() + font.SIZE * font_scale])
+                new_screen.blit(screen,[0,0])
+                screen = new_screen
+            font.draw_words(word,word_pos,[0,0,255],font_scale,screen)
+            word = "" #reset our word variable
+        else: #we aren't finished getting the next word...
+            if(word == ""):
+                word_pos[1] = y_increment * font_scale * font.SIZE
+                word_pos[0] = x_increment * font_scale * font.SIZE
+            word += message[x]
+    # - Draw a green border around the text -
+    if(x_offset > 0): #if we had to offset X at all, we may need to remove one line due to spacing
+        # - To make sure a black border is not copied over as well (from the edge of the surface not being used),
+        #   I need to resize the surface by 1 line of text (but this only happens sometimes).
+        new_screen = pygame.Surface([screen.get_width(),font.SIZE * font_scale * math.ceil((len(message) + x_offset) / width_char) + 1])
+        new_screen.blit(screen,[0,0])
+        screen = new_screen #whew...that was a lot of work
+        #   (if you have to move to a new line early but end up only utilizing the same amount of lines
+        pygame.draw.rect(screen,[0,255,0],[0,0,screen.get_width(),font.SIZE * font_scale * math.ceil((len(message) + x_offset) / width_char) - 1],1)
+    else:
+        pygame.draw.rect(screen,[0,255,0],[0,0,screen.get_width(),font.SIZE * font_scale * math.ceil((len(message) + x_offset) / width_char) - 1],1)
+    # - Return the message surface -
+    return screen  
+
+def get_input(screen,header="",flags=pygame.RESIZABLE): #makes a basic text input UI with a header of your choice
     global keys
     text = "" #this is what we've entered into the UI
     scale = 1.0 #the scale of our text as we draw it
@@ -328,6 +374,8 @@ def get_input(screen,header=""): #makes a basic text input UI with a header of y
         for event in pygame.event.get(): #check if somebody wanted to type something...
             if(event.type == pygame.QUIT): #we wanted to exit the text box?
                 return None
+            elif(event.type == pygame.VIDEORESIZE):
+                screen = pygame.display.set_mode(event.size, flags)
             elif(event.type == pygame.KEYDOWN):
                 if(event.key == pygame.K_RETURN): #they pressed enter!!!
                     running = False #exit the loop
@@ -408,10 +456,10 @@ class Menuhandler():
 ###basic menu test
 ##mh = Menuhandler()
 ##mh.create_menu(["Option a","This is a test option"],
-##               [[0,3],["a","b","c"],
+##               [[0,3],["a","b","c"]],
 ##               [],
 ##               [],
-##               "Test Menu"])
+##               "Test Menu")
 ##
 ##screen = pygame.display.set_mode([640,480],pygame.RESIZABLE)
 ##
@@ -435,3 +483,9 @@ class Menuhandler():
 ##    pygame.display.flip()
 ##
 ##pygame.quit()
+
+### - Paragraph draw demo -
+##screen = pygame.display.set_mode([300,900])
+##screen.blit(draw_message("this is a really long error message becasue I don't know what to do about this junk" \
+##             ,screen.get_width(),12),[0,0])
+##pygame.display.flip()

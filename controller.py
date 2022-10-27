@@ -1,4 +1,4 @@
-##"controller.py" library ---VERSION 0.03---
+##"controller.py" library ---VERSION 0.04---
 ## - use this library to easily make a game compatible with both controllers and keyboards!
 ##Copyright (C) 2022  Lincoln V.
 ##
@@ -56,6 +56,7 @@ def empty_keys(): #empties keycodes of keypresses
 def get_keys(): #this should be run once per frame/compute tick in a game's code for optimal performance.
     global keycodes
     wants_quit = False #quick boolean value which tells us whether it's time to quit
+    resize = None
     for event in pygame.event.get():
         if(event.type == pygame.QUIT): #if someone clicks the "X", we're going to return "True" from this function.
             wants_quit = True
@@ -65,7 +66,9 @@ def get_keys(): #this should be run once per frame/compute tick in a game's code
         elif(event.type == pygame.KEYUP): #if we released a key, we need to remove the keycode from our list of keypresses.
             if(event.key in keycodes): #make sure we're not deleting a keycode which isn't there!
                 del(keycodes[keycodes.index(event.key)])
-    return wants_quit #return whether we want to quit
+        elif(event.type == pygame.VIDEORESIZE):
+            resize = event.size[:]
+    return [wants_quit, resize] #return whether we want to quit
 
 class Controls():
     def __init__(self, buttons_ct=8, kb_ctrl="kb", js_num=None):
@@ -85,7 +88,7 @@ class Controls():
         if(self.kb_ctrl == "kb"): #we're getting input from a keyboard
             for x in range(0,len(self.buttons)): #check if any of our buttons keycodes matches any from keyboard_input
                 if(self.buttons[x] in keyboard_input): #did one of our keycodes match a keyboard press?
-                    buttons_pressed.append(self.buttons[x]) #make sure we add this button to buttons_pressed
+                    buttons_pressed.append(x) #make sure we add this button to buttons_pressed
         elif(self.kb_ctrl == "ctrl"): #we're getting input from a controller
             js_buttons = check_joystick_buttons(self.joystick)
             for x in range(0,len(js_buttons)):

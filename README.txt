@@ -17,7 +17,7 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 Dependancies:
 	Python 3, NOT 2
-	Pygame 2.0 or later (I don't think 1.9.6 will work, but you *could* try it. Not tested.)
+	Pygame 1.9.2 or later
 	Python's "socket" library (usually comes pre-installed as part of the Python 3 standard library)
 	Python's "time" library (again, usually pre-installed)
 
@@ -27,7 +27,7 @@ Brief overview of library functions:
 	Check the file for parameters. I *usually* comment my work decently.
  - menu.py
 	A sort-of basic library for building menus MUCH MORE QUICKLY than I could by making
-	each one by hand. I might need to comment that one a bit better...it's tricky to understand.
+	each one by hand. I need to comment that one a bit better...it's tricky to understand.
 	However, it is functional, and works well enough on practically any screen resolution.
  - netcode.py
 	A set of functions to allow the transmission of strings across the network without getting
@@ -37,7 +37,9 @@ Brief overview of library functions:
 	A library which works similarly to the menu.py library, but for designing HUDs instead of menus.
  - controller.py
 	Useful for making a game with configurable controls so that both keyboards and controllers are supported.
-	At the moment, I have only tested keyboards, and the library is not very useful as of yet.
+	At the moment, I have only tested keyboards, but the library is at a point where it is useful for configurable controls.
  - GFX.py
 	A library with a Particle() class. The Particle() class is used to create basic 2D graphical effects onscreen.
 	The GFX engine is designed to work extremely well with screen scaling, and tile-based games.
+	I have recently implemented a GFX_Manager() class which has made it much more efficient to transmit particle effects
+	over netcode.py's transmission methods.
