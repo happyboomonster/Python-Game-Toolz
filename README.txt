@@ -37,11 +37,14 @@ Brief overview of library functions:
 	A library which works similarly to the menu.py library, but for designing HUDs instead of menus.
  - controller.py
 	Useful for making a game with configurable controls so that both keyboards and controllers are supported.
-	Joysticks are fully usable, as I have programmed my library to utilize buttons, Dpads, and analog axes.
-	HOWEVER, analog controls will simply be converted to binary ON/OFF signals, so please do not try to use this
-	library for analog control solutions!
+	At the moment, I have only tested keyboards, but the library is at a point where it is useful for configurable controls.
  - GFX.py
 	A library with a Particle() class. The Particle() class is used to create basic 2D graphical effects onscreen.
 	The GFX engine is designed to work extremely well with screen scaling, and tile-based games.
 	I have recently implemented a GFX_Manager() class which has made it much more efficient to transmit particle effects
 	over netcode.py's transmission methods.
+ - SFX.py (new!)
+	This library allows players to manage music queues and sound effects in games rather easily.
+	The sounds also have volume decrease the farther away the player is from the sound's "source",
+	a coordinate point which the programmer must define. Like GFX.py, SFX.py has a SFX_Manager() class,
+	which helps with synchronizing sounds between client-server architectures.
